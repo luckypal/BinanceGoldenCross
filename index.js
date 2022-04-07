@@ -8,6 +8,7 @@ const RATIO_DIFF_AB = 0.006;
 const RATIO_DIFF_BC = 0.01;
 
 const pastPairStatus = {};
+let futurePrices = {};
 
 const mSleep = async (mSec) => {
   return new Promise((resolve) => setTimeout(resolve, mSec));
@@ -54,8 +55,10 @@ const checkGoldenCross = async (pair) => {
       && diffBC >= -RATIO_DIFF_BC
     ) isGoldenCross = false;
 
-    if (isGoldenCross !== null && pastPairStatus[pair] !== isGoldenCross)
-      console.log(isGoldenCross ? 'LONG' : 'SHORT', pair);
+    if (isGoldenCross !== null && pastPairStatus[pair] !== isGoldenCross) {
+      const price = futurePrices[pair.replace('/', '')];
+      console.log(currentDateTime(), isGoldenCross ? 'LONG' : 'SHORT', pair, price, '\n');
+    }
 
     pastPairStatus[pair] = isGoldenCross;
   } catch (e) {
@@ -71,7 +74,9 @@ const onInit = async () => {
   let index = 0;
 
   while (true) {
-    if (index == 0) console.log('\n\n\n', currentDateTime());
+    if (index == 0) {
+      futurePrices = await client.futuresPrices();
+    }
 
     const pair = pairs[index];
     checkGoldenCross(pair);
