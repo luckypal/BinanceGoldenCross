@@ -1,3 +1,4 @@
+const fs = require('fs');
 const Binance = require('binance-api-node').default
 const sma = require('trading-indicator').sma
 const client = Binance();
@@ -6,6 +7,7 @@ const client = Binance();
 const TIMEFRAME = '15m';
 const RATIO_DIFF_AB = 0.006;
 const RATIO_DIFF_BC = 0.01;
+const LOG_FILE = 'logs/cross.txt';
 
 const pastPairStatus = {};
 let futurePrices = {};
@@ -57,7 +59,9 @@ const checkGoldenCross = async (pair) => {
 
     if (isGoldenCross !== null && pastPairStatus[pair] !== isGoldenCross) {
       const price = futurePrices[pair.replace('/', '')];
-      console.log(currentDateTime(), isGoldenCross ? 'LONG' : 'SHORT', pair, price, '\n');
+      const direction = isGoldenCross ? 'LONG' : 'SHORT';
+      const message = `${direction} ${pair} ${price}\n`;
+      addLogs(message);
     }
 
     pastPairStatus[pair] = isGoldenCross;
@@ -66,10 +70,22 @@ const checkGoldenCross = async (pair) => {
   }
 }
 
+const initLogs = () => {
+  if (!fs.existsSync('logs')) fs.mkdirSync('logs');
+}
+
+const addLogs = (message) => {
+  message = `${currentDateTime()} ${message}`;
+  console.log(message);
+  fs.appendFileSync(LOG_FILE, message, { encoding: 'utf8' });
+}
+
 const onInit = async () => {
   console.log('MACD RADAR - FUTURES');
   console.log('TIMEFRAME: ', TIMEFRAME);
   console.log('DIFF: ', RATIO_DIFF_AB, RATIO_DIFF_BC);
+  initLogs();
+
   const pairs = await getFiatPairs('USDT');
   let index = 0;
 
